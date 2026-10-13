@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu EnsaioMix</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #fff; padding: 20px; }
+        .track { margin: 15px 0; display: flex; align-items: center; gap: 15px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>🎛️ Painel Ensaio Mix</h1>
+    <button id="playBtn">Play / Pause</button>
+
+    <!-- Controles das faixas (Stems) -->
+    <div class="track">
+        <label>🥁 Bateria:</label>
+        <input type="range" id="vol-bateria" min="0" max="1" step="0.1" value="1">
+    </div>
+    <div class="track">
+        <label>🎸 Baixo:</label>
+        <input type="range" id="vol-baixo" min="0" max="1" step="0.1" value="1">
+    </div>
