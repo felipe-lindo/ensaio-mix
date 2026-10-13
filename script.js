@@ -10,6 +10,8 @@
   const playBtn = $("playBtn");
   const stopBtn = $("stopBtn");
   const restartBtn = $("restartBtn");
+  const seekBar = $("seekBar");
+  let isSeeking = false;
   const masterVolume = $("masterVolume");
   const masterValue = $("masterValue");
   const muteAllBtn = $("muteAllBtn");
@@ -246,9 +248,47 @@
     if (isPlaying) rafId = requestAnimationFrame(tick);
   }
 
+
   function updateTimeReadout() {
-    $("timeReadout").textContent = `${formatTime(currentTime())} / ${formatTime(sessionDuration)}`;
+    const position = currentTime();
+
+    $("timeReadout").textContent =
+      `${formatTime(position)} / ${formatTime(sessionDuration)}`;
+
+    seekBar.max = String(sessionDuration);
+    seekBar.disabled = tracks.length === 0;
+
+    if (!isSeeking) {
+      seekBar.value = String(position);
+    }
   }
+
+  function seekTo(value) {
+    if (!tracks.length) return;
+
+    const position = Math.max(
+      0,
+      Math.min(Number(value) || 0, sessionDuration)
+    );
+
+    const wasPlaying = isPlaying;
+
+    if (wasPlaying) {
+      isPlaying = false;
+      stopSources();
+      cancelAnimationFrame(rafId);
+    }
+
+    pausedAt = position;
+    updateTimeReadout();
+
+    if (wasPlaying && pausedAt < sessionDuration) {
+      startSources(pausedAt);
+    } else if (wasPlaying) {
+      stopPlayback();
+    }
+  }
+
 
   function removeTrack(id) {
     const track = tracks.find(t => t.id === id);
@@ -286,6 +326,37 @@
   $("emptyUploadBtn").addEventListener("click", () => fallbackInput.click());
   playBtn.addEventListener("click", () => isPlaying ? pausePlayback() : playPlayback());
   stopBtn.addEventListener("click", stopPlayback);
+  
+  seekBar.addEventListener("pointerdown", () => {
+    isSeeking = true;
+  });
+
+  seekBar.addEventListener("pointerup", () => {
+    isSeeking = false;
+  });
+
+  seekBar.addEventListener("pointercancel", () => {
+    isSeeking = false;
+  });
+
+  seekBar.addEventListener("change", () => {
+    isSeeking = false;
+    seekTo(seekBar.value);
+  });
+
+  seekBar.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      isSeeking = true;
+    }
+  });
+
+  seekBar.addEventListener("keyup", (event) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      isSeeking = false;
+      seekTo(seekBar.value);
+    }
+  });
+
   restartBtn.addEventListener("click", () => {
     const wasPlaying = isPlaying;
     stopPlayback();
