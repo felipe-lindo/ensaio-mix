@@ -2,24 +2,217 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Meu EnsaioMix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnsaioMix Dinâmico</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: #fff; padding: 20px; }
-        .track { margin: 15px 0; display: flex; align-items: center; gap: 15px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            padding: 30px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #252538;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; color: #f5c2e7; margin-top: 0; }
+        
+        .upload-section {
+            border: 2px dashed #cba6f7;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            background: #11111b;
+            margin-bottom: 25px;
+        }
+        .upload-section input { display: none; }
+        .upload-btn {
+            background: #cba6f7;
+            color: #11111b;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .main-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #playBtn { background: #a6e3a1; color: #11111b; }
+        #stopBtn { background: #f38ba8; color: #11111b; }
+        .main-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .tracks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .track-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #181825;
+            padding: 12px 20px;
+            border-radius: 6px;
+            border-left: 5px solid #89b4fa;
+        }
+        .track-name {
+            flex: 1;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 15px;
+        }
+        .track-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .volume-slider {
+            width: 150px;
+            accent-color: #89b4fa;
+            cursor: pointer;
+        }
+        .vol-value { font-family: monospace; width: 35px; text-align: right; }
     </style>
 </head>
 <body>
 
-    <h1>🎛️ Painel Ensaio Mix</h1>
-    <button id="playBtn">Play / Pause</button>
+<div class="container">
+    <h1>🎛️ EnsaioMix Multi-Tracks</h1>
+    
+    <!-- Área de Seleção de Arquivos -->
+    <div class="upload-section">
+        <p>Selecione todas as tracks do seu computador de uma só vez (Suporta +20 arquivos)</p>
+        <label for="audioFiles" class="upload-btn">Escolher Arquivos de Áudio</label>
+        <input type="file" id="audioFiles" multiple accept="audio/*">
+        <div id="fileCount" style="margin-top: 10px; font-size: 13px; color: #a6adc8;">Nenhum arquivo carregado</div>
+    </div>
 
-    <!-- Controles das faixas (Stems) -->
-    <div class="track">
-        <label>🥁 Bateria:</label>
-        <input type="range" id="vol-bateria" min="0" max="1" step="0.1" value="1">
+    <!-- Controles Gerais de Play/Pause/Stop -->
+    <div class="controls">
+        <button id="playBtn" class="main-btn" disabled>Play</button>
+        <button id="stopBtn" class="main-btn" disabled>Stop</button>
     </div>
-    <div class="track">
-        <label>🎸 Baixo:</label>
-        <input type="range" id="vol-baixo" min="0" max="1" step="0.1" value="1">
-    </div>
+
+    <!-- Lista Dinâmica de Tracks Gerada por Código -->
+    <div id="tracksContainer" class="tracks-container"></div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('audioFiles');
+    const fileCount = document.getElementById('fileCount');
+    const tracksContainer = document.getElementById('tracksContainer');
+    const playBtn = document.getElementById('playBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    let trackList = [];
+    let isPlaying = false;
+
+    fileInput.addEventListener('change', function(e) {
+        const files = e.target.files;
+        if (files.length === 0) return;
+
+        // Limpar tracks anteriores se houver
+        stopAll();
+        tracksContainer.innerHTML = '';
+        trackList = [];
+
+        fileCount.textContent = `${files.length} arquivo(s) selecionado(s).`;
+
+        // Criar um reprodutor para cada arquivo selecionado
+        Array.from(files).forEach((file, index) => {
+            const fileURL = URL.createObjectURL(file);
+            const audioObj = new Audio(fileURL);
+            audioObj.loop = true; // Mantém em loop para o ensaio não parar do nada
+
+            // Criar a interface visual da linha do instrumento
+            const row = document.createElement('div');
+            row.className = 'track-row';
+            
+            // Limpa o nome do arquivo tirando a extensão para ficar mais bonito
+            const displayName = file.name.replace(/\.[^/.]+\$/, "");
+
+            row.innerHTML = `
+                <div class="track-name" title="${file.name}">🎵 ${displayName}</div>
+                <div class="track-controls">
+                    <label>Vol:</label>
+                    <input type="range" class="volume-slider" min="0" max="1" step="0.05" value="0.8">
+                    <span class="vol-value">80%</span>
+                </div>
+            `;
+
+            const slider = row.querySelector('.volume-slider');
+            const volValue = row.querySelector('.vol-value');
+
+            // Configura volume inicial do objeto de áudio
+            audioObj.volume = 0.8;
+
+            // Escuta a mudança de volume individual
+            slider.addEventListener('input', (event) => {
+                const val = event.target.value;
+                audioObj.volume = val;
+                volValue.textContent = `${Math.round(val * 100)}%`;
+            });
+
+            tracksContainer.appendChild(row);
+
+            // Guarda a referência para controlar no Play/Stop global
+            trackList.push(audioObj);
+        });
+
+        // Ativa os botões principais de controle
+        playBtn.disabled = false;
+        stopBtn.disabled = false;
+    });
+
+    // Função de Play / Pause Global Sincronizado
+    playBtn.addEventListener('click', () => {
+        if (!isPlaying) {
+            trackList.forEach(audio => audio.play());
+            playBtn.textContent = 'Pause';
+            playBtn.style.background = '#f9e2af';
+            isPlaying = true;
+        } else {
+            trackList.forEach(audio => audio.pause());
+            playBtn.textContent = 'Play';
+            playBtn.style.background = '#a6e3a1';
+            isPlaying = false;
+        }
+    });
+
+    // Função de Parar e resetar para o início
+    stopBtn.addEventListener('click', stopAll);
+
+    function stopAll() {
+        trackList.forEach(audio => {
+            audio.pause();
+            audio.currentTime = 0; // Volta o áudio para o início
+        });
+        playBtn.textContent = 'Play';
+        playBtn.style.background = '#a6e3a1';
+        isPlaying = false;
+    }
+</script>
+
+</body>
+</html>
