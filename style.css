@@ -114,3 +114,24 @@ h1 { margin:0; font-size:17px; letter-spacing:-.3px; }
   .mixer-footer { flex-direction:column; }
   .upload-panel { padding:15px; }
 }
+
+/* Barra de progresso da música */
+.seek-bar {
+  flex: 1 1 100%;
+  min-width: 100px;
+  width: 100%;
+  margin: 3px 0 0;
+  accent-color: var(--blue);
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.seek-bar:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.transport-buttons #timeReadout {
+  flex-basis: 100%;
+}
