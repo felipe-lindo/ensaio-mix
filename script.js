@@ -327,33 +327,22 @@
   playBtn.addEventListener("click", () => isPlaying ? pausePlayback() : playPlayback());
   stopBtn.addEventListener("click", stopPlayback);
   
-  seekBar.addEventListener("pointerdown", () => {
+
+  seekBar.addEventListener("input", () => {
     isSeeking = true;
   });
 
-  seekBar.addEventListener("pointerup", () => {
-    isSeeking = false;
-  });
-
-  seekBar.addEventListener("pointercancel", () => {
-    isSeeking = false;
-  });
-
   seekBar.addEventListener("change", () => {
+    const chosenPosition = seekBar.value;
     isSeeking = false;
-    seekTo(seekBar.value);
+    seekTo(chosenPosition);
   });
 
-  seekBar.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-      isSeeking = true;
-    }
-  });
-
-  seekBar.addEventListener("keyup", (event) => {
-    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+  seekBar.addEventListener("blur", () => {
+    if (isSeeking) {
+      const chosenPosition = seekBar.value;
       isSeeking = false;
-      seekTo(seekBar.value);
+      seekTo(chosenPosition);
     }
   });
 
